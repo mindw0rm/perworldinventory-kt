@@ -9,6 +9,7 @@ import me.ebonjaeger.perworldinventory.event.Cause
 import me.ebonjaeger.perworldinventory.event.InventoryLoadEvent
 import me.ebonjaeger.perworldinventory.permission.PlayerPermission
 import org.bukkit.Bukkit
+import org.bukkit.GameMode
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
@@ -27,12 +28,19 @@ class PlayerGameModeChangeListener @Inject constructor(private val groupManager:
 
         val player = event.player
         val group = groupManager.getGroupFromWorld(player.world.name)
+        val newMode = profileManager.getGamemodeClass(event.newGameMode)
+        val oldMode = profileManager.getGamemodeClass(player.gameMode)
+
+        // do nothing if switching from survival to adventure or back
+        if (newMode == oldMode) {
+            return
+        }
 
         ConsoleLogger.fine("onPlayerChangedGameMode: '${player.name}' changing GameModes")
-        ConsoleLogger.debug("onPlayerChangedGameMode: newGameMode: ${event.newGameMode}, group: $group")
+        ConsoleLogger.debug("onPlayerChangedGameMode: newGameMode: ${newMode}, group: $group")
 
         // Save the current profile
-        profileManager.addPlayerProfile(player, group, player.gameMode)
+        profileManager.addPlayerProfile(player, group, oldMode)
 
         // Check if the player can bypass the inventory switch
         if (!settings.getProperty(PluginSettings.DISABLE_BYPASS) &&
@@ -43,11 +51,11 @@ class PlayerGameModeChangeListener @Inject constructor(private val groupManager:
 
         // Create and call an InventoryLoadEvent. If it isn't cancelled, load
         // the player's new profile
-        val loadEvent = InventoryLoadEvent(player, Cause.GAMEMODE_CHANGE, player.gameMode, event.newGameMode, group)
+        val loadEvent = InventoryLoadEvent(player, Cause.GAMEMODE_CHANGE, oldMode, newMode, group)
         Bukkit.getPluginManager().callEvent(loadEvent)
         if (!loadEvent.isCancelled) {
             ConsoleLogger.fine("onPlayerChangedGameMode: Loading profile for '${player.name}'")
-            profileManager.getPlayerData(player, group, event.newGameMode)
+            profileManager.getPlayerData(player, group, newMode)
         }
     }
 }

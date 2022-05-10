@@ -43,7 +43,7 @@ class ProfileManager @Inject constructor(private val bukkitService: BukkitServic
     fun addPlayerProfile(player: Player, group: Group, gameMode: GameMode)
     {
         val gm = when {
-            separateGameModes -> gameMode
+            separateGameModes -> getGamemodeClass(gameMode)
             else -> GameMode.SURVIVAL
         }
 
@@ -74,7 +74,7 @@ class ProfileManager @Inject constructor(private val bukkitService: BukkitServic
     fun getPlayerData(player: Player, group: Group, gameMode: GameMode)
     {
         val gm = when {
-            separateGameModes -> gameMode
+            separateGameModes -> getGamemodeClass(gameMode)
             else -> GameMode.SURVIVAL
         }
 
@@ -255,5 +255,9 @@ class ProfileManager @Inject constructor(private val bukkitService: BukkitServic
         }
 
         economyService.withdrawFromPlayer(player)
+    }
+
+    fun getGamemodeClass(gm : GameMode): GameMode {
+        return if (gm == GameMode.ADVENTURE) GameMode.SURVIVAL else gm
     }
 }
